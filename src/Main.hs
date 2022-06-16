@@ -1,4 +1,6 @@
 {-# LANGUAGE BlockArguments    #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DerivingVia       #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -8,20 +10,25 @@ import           Control.Monad             (void, when)
 import           Data.Bifunctor            (first)
 import           Data.List                 (find)
 import           Data.List.NonEmpty        (NonEmpty (..))
+import qualified Data.List.NonEmpty        as NL
 import           Data.Maybe                (fromJust, isJust)
 import qualified Data.Text                 as T
+import           GHC.Generics
 import           Graphics.UI.Pashua
 import           Graphics.UI.Pashua.Parser
 import           System.Environment        (getArgs)
 import           Text.Read                 (readEither)
+import           TextShow
+import           TextShow.Generic
 
 data WidgetID
   = Vertical | HrTSS | Weight
   | Strength | Duration
   | OK | Cancel
-  deriving (Show, Eq)
+  deriving (Eq, Generic) deriving TextShow via FromGeneric WidgetID
 
-data StrengthType = General | Max deriving (Show, Eq, Enum, Read)
+data StrengthType = General | Max
+  deriving (Eq, Enum, Read, Generic) deriving TextShow via FromGeneric StrengthType
 
 main :: IO ()
 main = do
@@ -35,9 +42,9 @@ mainStrength :: IO ()
 mainStrength = do
   let radioList = mkOptionListFromEnum (Just General)
       form :: Maybe (Form WidgetID)
-      form = mkForm Nothing
-             [ radioButton Strength radioList
-             , (defaultButton OK) { label_ = Just "Calculate" }
+      form = mkForm Nothing $
+             radioButton Strength radioList NL.:|
+             [ (defaultButton OK) { label_ = Just "Calculate" }
              , (textField Duration) { label_ = Just "Duration in minutes"
                                     , mandatory = Just True }
              , cancelButton Cancel
@@ -59,17 +66,17 @@ mainStrength = do
       case x of
         Left FormCancelled -> pure ()
         Left (ParseError w s) ->
-          simpleMessage "Error: " $ T.pack $ show w <> " - " <> s
+          simpleMessage "Error: " $ showt w <> " - " <> T.pack s
         Right v -> simpleMessage "TSS" $ "TSS is " <> T.pack (show v)
 
 mainHike :: IO ()
 mainHike = do
   let form :: Maybe (Form WidgetID)
-      form = mkForm Nothing
-             [ (textField Vertical) { mandatory = Just True
-                                      , label_ = Just "Elevation in m" }
-             , (textField HrTSS) { mandatory = Just True
-                                   , label_ = Just "HrTSS" }
+      form = mkForm Nothing $
+             (textField Vertical) { mandatory = Just True
+                                  , label_ = Just "Elevation in m" } NL.:|
+             [ (textField HrTSS) { mandatory = Just True
+                                 , label_ = Just "HrTSS" }
              , checkbox Weight "With 10%+ BW"
              , (defaultButton OK) { label_ = Just "Calculate" }
              , cancelButton Cancel
@@ -91,5 +98,5 @@ mainHike = do
       case x of
         Left FormCancelled -> pure ()
         Left (ParseError w s) ->
-          simpleMessage "Error: " $ T.pack $ show w <> " - " <> s
+          simpleMessage "Error: " $ showt w <> " - " <> T.pack s
         Right v  -> simpleMessage "TSS" $ "Adjusted TSS is " <> T.pack (show v)

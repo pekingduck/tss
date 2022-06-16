@@ -21,3 +21,4 @@ executable tss
                      , pashua
                      , text
                      , mtl
+                     , text-show

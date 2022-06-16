@@ -43,7 +43,7 @@ packages:
 # extra-deps: []
 extra-deps:
 - git: https://github.com/pekingduck/pashua-hs.git
-  commit: 4ee1575f8e216a750834cbe1915e26321dfd0654
+  commit: 68eafa3c6f8f8db40e9122647292b47e101c84b2
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
